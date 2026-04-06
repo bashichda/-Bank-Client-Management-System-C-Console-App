@@ -1,21 +1,29 @@
-# 🏦 Bank Client Management System v2 — C++ Console App
+# 🏦 Bank Client Management System v3 — C++ Console App
 
 ![C++](https://img.shields.io/badge/Language-C%2B%2B-blue?style=flat-square&logo=cplusplus)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat-square&logo=windows)
 ![File I/O](https://img.shields.io/badge/Storage-File%20I%2FO-orange?style=flat-square)
-![Version](https://img.shields.io/badge/Version-2.0-purple?style=flat-square)
+![Auth](https://img.shields.io/badge/Auth-Login%20%2B%20Permissions-red?style=flat-square)
+![Version](https://img.shields.io/badge/Version-3.0-purple?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Complete-brightgreen?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 
-An extended console-based **Bank Client Management System** written in C++. This version builds on v1 by adding a full **Transactions Menu** with Deposit, Withdraw, and Total Balances features — all persisted to a text file.
+A fully-featured console-based **Bank Management System** written in C++. This version introduces a **Login Screen**, a **Role-Based Permission System**, and a complete **User Management Module** — making it the most advanced version in the series.
 
-> 🔗 **v1 (Client Management only):** [Bank-Client-Management-v1](https://github.com/YourUsername/Bank-Client-Management-v1)
+> 🔗 **v1 (Client Management):** [Bank-Client-Management-v1](https://github.com/YourUsername/Bank-Client-Management-v1)
+> 🔗 **v2 (+ Transactions):** [Bank-Client-Management-v2](https://github.com/YourUsername/Bank-Client-Management-v2)
 
 ---
 
 ## 📸 Preview
 
 ```
+-------------------------------------
+            Login Screen
+-------------------------------------
+Enter UserName : admin
+Enter Password : 1234
+
 ================================================
                 Main Menue Screen
 ================================================
@@ -24,51 +32,43 @@ An extended console-based **Bank Client Management System** written in C++. This
         [3] Delete Client.
         [4] Update Client Info.
         [5] Find Client.
-        [6] Transactions.         ← NEW in v2
-        [7] Exit.
+        [6] Transactions.
+        [7] Manage Users.        ← NEW in v3
+        [8] Logout.              ← NEW in v3
 ================================================
 
-================================================
-            Transactions Menue Screen
-================================================
-        [1] Deposit.
-        [2] Withdraw.
-        [3] Total Balances.
-        [4] Main Menue.
-================================================
-
-----------------------------------------------------------------------------------------------
-| Account Number  | Client Name                              | Balance
-----------------------------------------------------------------------------------------------
-| A1001           | Mohammed El Amrani                       | 20000.00
-| A1002           | Sara Benali                              | 8500.50
-----------------------------------------------------------------------------------------------
-                                        Total Balances = 28500.50
+-----------------------------------------
+Access Denied,
+You don't have Permission to Do this,
+Please Contact Your Admin.
+-----------------------------------------
 ```
 
 ---
 
-## ✨ What's New in v2
+## ✨ What's New in v3
 
-| Feature | v1 | v2 |
-|---|---|---|
-| List / Add / Delete / Update / Find clients | ✅ | ✅ |
-| Transactions Menu | ❌ | ✅ |
-| Deposit to account | ❌ | ✅ |
-| Withdraw from account | ❌ | ✅ |
-| Overdraft protection | ❌ | ✅ |
-| Total balances screen | ❌ | ✅ |
-| Dual menu navigation | ❌ | ✅ |
+| Feature | v1 | v2 | v3 |
+|---|---|---|---|
+| Client CRUD (List/Add/Delete/Update/Find) | ✅ | ✅ | ✅ |
+| Transactions (Deposit/Withdraw/Balances) | ❌ | ✅ | ✅ |
+| Login Screen with authentication | ❌ | ❌ | ✅ |
+| Role-based permission system | ❌ | ❌ | ✅ |
+| User Management (CRUD) | ❌ | ❌ | ✅ |
+| Bitwise permission flags | ❌ | ❌ | ✅ |
+| Access Denied protection per screen | ❌ | ❌ | ✅ |
+| Logout & session handling | ❌ | ❌ | ✅ |
 
 ---
 
 ## 🗂️ Project Structure
 
 ```
-Bank-Client-Management-v2/
+Bank-Client-Management-v3/
 │
 ├── main.cpp         # Full application source code
-├── Clients.txt      # Auto-generated data file (created on first add)
+├── Clients.txt      # Auto-generated clients data file
+├── Users.txt        # Auto-generated users data file
 └── README.md        # Project documentation
 ```
 
@@ -80,52 +80,91 @@ Bank-Client-Management-v2/
 
 | Component | Type | Description |
 |---|---|---|
-| `sClient` | `struct` | Holds account number, pin, name, phone, balance, delete flag |
-| `enMainMenueOptions` | `enum` | Maps main menu choices (1–7) to operations |
-| `enTransactionsMenueOptions` | `enum` | Maps transaction menu choices (1–4) to operations |
+| `sClient` | `struct` | Account number, pin, name, phone, balance, delete flag |
+| `sUser` | `struct` | Username, password, permissions (int), delete flag |
+| `CurrentUser` | `global sUser` | Stores the currently logged-in user's session |
+| `enMainMenueOptions` | `enum` | Main menu choices (1–8) |
+| `enTransactionsMenueOptions` | `enum` | Transaction menu choices (1–4) |
+| `enManageUsersMenueOptions` | `enum` | User management menu choices (1–6) |
+| `enMainMenuePermissions` | `enum` | Bitwise permission flags for each feature |
+
+### 🔐 Permission System (Bitwise Flags)
+
+Permissions are stored as a single `int` using bitwise OR — each feature maps to a unique power of 2:
+
+| Permission | Value | Binary |
+|---|---|---|
+| `pListClient` | 1 | `0000001` |
+| `pAddClient` | 2 | `0000010` |
+| `pDeleteClient` | 4 | `0000100` |
+| `pUpdateClient` | 8 | `0001000` |
+| `pFindClient` | 16 | `0010000` |
+| `pTransaction` | 32 | `0100000` |
+| `pManageUsers` | 64 | `1000000` |
+| `pAll` | -1 | Full access |
+
+**Example:** A user with permissions `= 35` has access to: List (1) + Add (2) + Transaction (32) = `35`
+
+```cpp
+// How permission check works:
+bool CheckPermission(enMainMenuePermissions Permission) {
+    if (CurrentUser.Permissions == pAll) return true;
+    return (Permission & CurrentUser.Permissions) == Permission;
+}
+```
 
 ### Menu Flow
 
 ```
-Main Menu
-├── [1] Show Client List
-├── [2] Add New Client
-├── [3] Delete Client
-├── [4] Update Client Info
-├── [5] Find Client
-├── [6] Transactions ──────► Transactions Menu
-│                               ├── [1] Deposit
-│                               ├── [2] Withdraw
-│                               ├── [3] Total Balances
-│                               └── [4] Back to Main Menu
-└── [7] Exit
+Login Screen
+    └── Authenticate from Users.txt
+            └── Main Menu
+                ├── [1] Show Client List      (requires pListClient)
+                ├── [2] Add New Client         (requires pAddClient)
+                ├── [3] Delete Client          (requires pDeleteClient)
+                ├── [4] Update Client          (requires pUpdateClient)
+                ├── [5] Find Client            (requires pFindClient)
+                ├── [6] Transactions ────────► Transactions Menu
+                │                               ├── [1] Deposit    (requires pTransaction)
+                │                               ├── [2] Withdraw
+                │                               ├── [3] Total Balances
+                │                               └── [4] Back to Main Menu
+                ├── [7] Manage Users ────────► Manage Users Menu  (requires pManageUsers)
+                │                               ├── [1] List Users
+                │                               ├── [2] Add User
+                │                               ├── [3] Delete User
+                │                               ├── [4] Update User
+                │                               ├── [5] Find User
+                │                               └── [6] Back to Main Menu
+                └── [8] Logout ──────────────► Login Screen
 ```
 
 ### Key Functions
 
-**Client Management (inherited from v1):**
+**Authentication:**
 
 | Function | Description |
 |---|---|
-| `LoadClientsDataFromFile()` | Reads all records from file into `vector<sClient>` |
-| `SaveDataClientsInFile()` | Writes the full vector back to file (skips deleted) |
-| `ConvertLineToRecord()` | Parses a delimited line into an `sClient` struct |
-| `ConvertRecordToLine()` | Serializes an `sClient` struct into a delimited string |
-| `FindClientByAccountNumber()` | Searches vector for a client by account number |
-| `DeleteClientByAccountNumber()` | Confirms then soft-deletes and saves |
-| `UpdateClientByAccontNumber()` | Confirms then updates client in vector and saves |
+| `Login()` | Login loop — retries until valid credentials entered |
+| `FindUserByUserNameAndPassword()` | Searches `Users.txt` for matching username + password |
+| `LoadUserInfo()` | Sets `CurrentUser` global on successful login |
+| `CheckPermission()` | Bitwise check of current user's permission against required flag |
+| `ShowAccessDeniedMessage()` | Displays access denied message when permission check fails |
 
-**Transactions (new in v2):**
+**User Management (new in v3):**
 
 | Function | Description |
 |---|---|
-| `DepositBalanceToClientByAccountNumber()` | Adds amount to client balance and saves to file |
-| `ShowDepositScreen()` | Finds client, reads amount, calls deposit function |
-| `ShowWithdrawScreen()` | Finds client, validates amount vs balance, calls deposit with negative value |
-| `ShowTotalBalancesScreen()` | Lists all clients with balances and prints the sum |
-| `ShowTransactionsMenue()` | Renders the transactions menu and routes choices |
-| `PerformTransactionsMenueOptions()` | Switch-case dispatcher for all transaction actions |
-| `GoBackToTransactionMenue()` | Returns to the transactions menu after any operation |
+| `LoadUsersDataFromFile()` | Reads all user records into `vector<sUser>` |
+| `SaveDataUsersInFile()` | Writes user vector back to file (skips deleted) |
+| `ConvertUserRecordToLine()` | Serializes `sUser` to `username#//#password#//#permissions` |
+| `ConvertUserLineToRecord()` | Parses a line from `Users.txt` into an `sUser` struct |
+| `ReadNewUser()` | Reads username, password, and sets permissions interactively |
+| `ChangeUserRecord()` | Reads updated password and permissions for an existing user |
+| `FindUserByUserName()` | Searches user vector by username |
+| `DeleteUserByUserName()` | Confirms then soft-deletes and saves |
+| `UpdateUserByUserName()` | Confirms then updates user record and saves |
+| `ShowManageUserMenue()` | Renders user management menu (requires `pManageUsers`) |
 
 ---
 
@@ -140,8 +179,8 @@ Main Menu
 
 **Using g++ (MinGW / terminal):**
 ```bash
-g++ main.cpp -o BankSystemV2
-./BankSystemV2
+g++ main.cpp -o BankSystemV3
+./BankSystemV3
 ```
 
 **Using Visual Studio:**
@@ -149,73 +188,32 @@ g++ main.cpp -o BankSystemV2
 2. Add `main.cpp` to the project
 3. Press `Ctrl + F5` to build and run
 
-> ⚠️ `Clients.txt` will be created automatically in the same directory as the executable when you first add a client.
+### First Run Setup
+
+On the first run, you need a `Users.txt` file with at least one admin account. Create it manually in the same folder as the executable:
+
+```
+admin#//#1234#//#-1
+```
+
+> This creates user `admin` with password `1234` and full access (`-1 = pAll`).
 
 ---
 
-## 🎮 How to Use
+## 💾 File Formats
 
-### Main Menu
-
-| Option | Action |
-|---|---|
-| `1` | Show formatted list of all clients |
-| `2` | Add one or more new clients |
-| `3` | Delete a client by account number |
-| `4` | Update a client's info |
-| `5` | Find and display a client's details |
-| `6` | Open the Transactions menu |
-| `7` | Exit the program |
-
-### Transactions Menu
-
-| Option | Action |
-|---|---|
-| `1` | Deposit an amount into a client's account |
-| `2` | Withdraw an amount (with overdraft protection) |
-| `3` | View all balances and the total sum |
-| `4` | Return to the Main Menu |
-
----
-
-## 🧠 How Transactions Work
-
-**Deposit:**
-```
-Find client by account number
-→ Show client card
-→ Enter amount
-→ Confirm (y/n)
-→ balance += amount → Save to file
-```
-
-**Withdraw:**
-```
-Find client by account number
-→ Show client card
-→ Enter amount
-→ Validate: amount must not exceed current balance
-→ Confirm (y/n)
-→ balance += (amount * -1) → Save to file
-```
-
-**Total Balances:**
-```
-Load all clients
-→ Print each client's account + name + balance
-→ Sum all balances → Display total
-```
-
----
-
-## 💾 File Format
-
-Client records are stored in `Clients.txt` using a custom `#//#` delimiter:
-
+**Clients.txt** — delimited by `#//#`:
 ```
 A1001#//#1234#//#Mohammed El Amrani#//#0612345678#//#20000.000000
-A1002#//#5678#//#Sara Benali#//#0698765432#//#8500.500000
 ```
+
+**Users.txt** — delimited by `#//#`:
+```
+admin#//#1234#//#-1
+staff#//#5678#//#35
+```
+
+> User `staff` with permissions `35` = List (1) + Add (2) + Transactions (32)
 
 ---
 
@@ -223,18 +221,19 @@ A1002#//#5678#//#Sara Benali#//#0698765432#//#8500.500000
 
 - **Language:** C++
 - **Libraries:** `<iostream>`, `<fstream>`, `<vector>`, `<string>`, `<iomanip>`
-- **Concepts:** Structs, Enums, File I/O, Vectors, CRUD, Soft Delete, Dual Menu Navigation, Overdraft Validation
+- **Concepts:** Structs, Enums, File I/O, Vectors, CRUD, Bitwise Operations, Role-Based Access Control (RBAC), Session Management, Soft Delete
 
 ---
 
 ## 🔮 Possible Improvements
 
-- [ ] Add **transaction history log** per client
-- [ ] Add **password hashing** for PinCode security
+- [ ] Hash passwords instead of storing them as plain text
+- [ ] Add **last login timestamp** per user
+- [ ] Implement **account lockout** after failed login attempts
+- [ ] Add **transaction history log** with date and time
 - [ ] Support **transfer between accounts**
-- [ ] Add **date/time stamping** for each transaction
 - [ ] Port to **cross-platform** (remove `system()` calls)
-- [ ] Migrate storage to **SQLite** or a proper database
+- [ ] Migrate storage to **SQLite** for scalability
 
 ---
 
