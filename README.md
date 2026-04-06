@@ -10,9 +10,6 @@
 
 A fully-featured console-based **Bank Management System** written in C++. This version introduces a **Login Screen**, a **Role-Based Permission System**, and a complete **User Management Module** — making it the most advanced version in the series.
 
-> 🔗 **v1 (Client Management):** [Bank-Client-Management-v1](https://github.com/YourUsername/Bank-Client-Management-v1)
-> 🔗 **v2 (+ Transactions):** [Bank-Client-Management-v2](https://github.com/YourUsername/Bank-Client-Management-v2)
-
 ---
 
 ## 📸 Preview
